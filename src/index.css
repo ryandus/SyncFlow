@@ -1,0 +1,12 @@
+@import "tailwindcss";
+
+@layer utilities {
+  .font-digital {
+    font-family: 'Chakra Petch', 'JetBrains Mono', ui-monospace, monospace;
+  }
+}
+
+.digital-led {
+  text-shadow: 0 0 12px rgba(45, 212, 191, 0.45);
+}
+

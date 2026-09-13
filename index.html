@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en" class="h-full bg-slate-950 text-slate-100">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+    <title>SyncFlow: Forensic DVR Clock-Drift &amp; Timeline Calibrator</title>
+    <meta name="description" content="Mobile-first, client-side forensic video calibration tool for DVR clock-drift calculation, LEVA timeline synchronization, and court-admissible evidence reporting. Engineered by R. Hanks." />
+    <meta property="og:title" content="SyncFlow: Forensic DVR Clock-Drift &amp; Timeline Calibrator" />
+    <meta property="og:description" content="Mobile-first, client-side forensic video calibration tool for DVR clock-drift calculation, LEVA timeline synchronization, and court-admissible evidence reporting. Engineered by R. Hanks." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    
+    <!-- Google Fonts for Digital Forensic Displays -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['"Plus Jakarta Sans"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+              mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
+              digital: ['"Chakra Petch"', 'ui-monospace', 'monospace'],
+            },
+            colors: {
+              forensic: {
+                50: '#f0fdfa',
+                100: '#ccfbf1',
+                400: '#2dd4bf',
+                500: '#14b8a6',
+                600: '#0d9488',
+                700: '#0f766e',
+                900: '#134e4a',
+                950: '#042f2e',
+              }
+            }
+          }
+        }
+      }
+    </script>
+    
+    <!-- Third-Party Forensic CDN Dependencies -->
+    <!-- 1. ExifReader for parsing DateTimeOriginal, SubSecTimeOriginal, camera hardware details, GPS -->
+    <script src="https://cdn.jsdelivr.net/npm/exifreader/dist/exif-reader.js"></script>
+    <!-- 2. Tesseract.js for client-side OCR of the cropped DVR screen clock -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@v5/dist/tesseract.min.js"></script>
+    <!-- 3. html2canvas to render court-ready evidence cards directly to high-resolution PNGs -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+    <style>
+      /* Custom fine-grained forensic styles */
+      .digital-led {
+        text-shadow: 0 0 10px rgba(45, 212, 191, 0.5);
+      }
+      .watermark-overlay {
+        pointer-events: none;
+        user-select: none;
+      }
+      /* Custom scrollbars */
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #020617;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #334155;
+        border-radius: 3px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #475569;
+      }
+    </style>
+  </head>
+  <body class="h-full bg-slate-950 text-slate-100 font-sans antialiased selection:bg-teal-500/30 selection:text-teal-200">
+    <div id="root" class="min-h-full"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+

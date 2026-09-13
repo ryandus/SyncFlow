@@ -1,0 +1,6 @@
+{
+  "name": "SyncFlow: Forensic DVR Clock-Drift & Timeline Calibrator",
+  "description": "Mobile-first, client-side forensic video calibration tool for DVR clock-drift calculation, LEVA timeline synchronization, and court-admissible evidence reporting.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
