@@ -44,4 +44,4 @@ SyncFlow ships with built-in authentic test cases (Hikvision, Dahua, and Hanwha 
 SyncFlow joins a suite of open-source diagnostic and investigative web applications (including *TriageFlow* and the *Police Report Generator*) built to streamline technical workflows and maintain rigorous analytical standards. 
 
 ## 📄 License
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License.
