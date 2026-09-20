@@ -6,10 +6,9 @@
  */
 
 import { ForensicEvidenceState } from './types';
-import { calculateSha256, formatFileSize } from './utils/crypto';
+import { calculateSha256 } from './utils/crypto';
 import { parseExifMetadata } from './utils/exifParser';
 import { calculateClockDrift } from './utils/calibrationMath';
-import { FORENSIC_DEMO_CASES } from './utils/demoData';
 
 import { renderHeader } from './components/Header';
 import { renderFooter } from './components/Footer';
@@ -33,22 +32,23 @@ export class SyncFlowApp {
   private driftPanel!: DriftResultsPanel;
   private timelineConverter!: TimelineConverter;
   private cardManager!: EvidenceCardManager;
-  private activeDemoIndex: number | null = 0;
 
   constructor(root: HTMLElement) {
     this.root = root;
 
-    // Initialize with Demo 1 defaults (Hikvision case)
-    const demo1 = FORENSIC_DEMO_CASES[0];
+    const today = new Date();
+    const pad = (n: number, z = 2) => String(n).padStart(z, '0');
+    const todayStr = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
 
+    // Initialize with pristine, production-ready forensic casework defaults
     this.state = {
       imageFile: null,
       imageSrc: null,
-      imageFileName: 'Hikvision_Calibration_Frame_Cam02.jpg',
-      imageFileSize: 1428500,
-      sha256Hash: '3f8b72c918e9508d519b78848f32145e12850892019da8e8091811a2f641b0d2',
-      exif: demo1.exif,
-      cropRoi: demo1.cropDefault,
+      imageFileName: 'No evidence file loaded',
+      imageFileSize: 0,
+      sha256Hash: 'Awaiting evidence file...',
+      exif: null,
+      cropRoi: { x: 50, y: 50, width: 280, height: 60 },
       preprocess: {
         grayscale: true,
         invert: false,
@@ -58,11 +58,51 @@ export class SyncFlowApp {
       },
       croppedDataUrl: null,
       preprocessedDataUrl: null,
-      dvrTime: demo1.dvrTime,
-      referenceTime: demo1.referenceTime,
+      dvrTime: {
+        year: today.getFullYear(),
+        month: today.getMonth() + 1,
+        day: today.getDate(),
+        hour: 12,
+        minute: 0,
+        second: 0,
+        millisecond: 0,
+        rawOcrText: '',
+        ocrConfidence: 0,
+        isVerified: false,
+      },
+      referenceTime: {
+        year: today.getFullYear(),
+        month: today.getMonth() + 1,
+        day: today.getDate(),
+        hour: 12,
+        minute: 0,
+        second: 0,
+        millisecond: 0,
+        source: 'manual',
+        sourceDetails: 'Manual Forensic Ground Truth',
+      },
       driftResult: null,
-      caseMetadata: demo1.caseMetadata,
-      milestones: [],
+      caseMetadata: {
+        caseNumber: '',
+        evidenceId: '',
+        agency: '',
+        examiner: 'R. Hanks',
+        examinationDate: todayStr,
+        dvrMake: '',
+        dvrModel: '',
+        dvrSerial: '',
+        location: '',
+        notes: '',
+      },
+      milestones: [
+        {
+          id: 'm-1',
+          label: 'Suspect Enters Scene',
+          dvrTimestamp: `${todayStr} 12:00:00`,
+          calibratedTimestamp: '',
+          notes: 'Subject observed entering perimeter on primary camera',
+        },
+      ],
       multiPoint: { enabled: false },
       isOcrProcessing: false,
       ocrProgress: 0,
@@ -87,151 +127,83 @@ export class SyncFlowApp {
 
         <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-6 sm:px-6 flex flex-col gap-6">
           
-          <!-- Forensic Benchmark Examples & Test Suites (LEVA Case Studies) -->
-          <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 sm:p-5 flex flex-col gap-4 shadow-sm">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+          <!-- Top Section: Case & Evidence Identification (Top-Left) paired with Evidence Acquisition (Top-Right) -->
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+            
+            <!-- Top-Left: Case & Evidence Identification (Occupies prominent visual space) -->
+            <div class="lg:col-span-7 bg-slate-900 border border-slate-800 rounded-xl p-5 flex flex-col justify-between gap-4 shadow-sm">
               <div>
-                <div class="flex items-center gap-2 flex-wrap">
-                  <span class="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-teal-500/20 text-teal-300 border border-teal-500/30">
-                    FORENSIC BENCHMARK EXAMPLES
-                  </span>
-                  <span class="text-xs text-slate-400 font-mono">LEVA &amp; SWGDE Test Bench</span>
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3 flex-wrap gap-2">
+                  <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-teal-400"></span>
+                    <h2 class="font-bold text-white text-base">
+                      Case &amp; Evidence Identification
+                    </h2>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-teal-500/20 text-teal-300 border border-teal-500/30 font-bold">
+                      LEVA Chain of Custody
+                    </span>
+                  </div>
+                  <button id="btn-clear-case-meta" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-rose-950/60 border border-slate-700 hover:border-rose-700/50 text-slate-400 hover:text-rose-300 text-xs font-mono transition flex items-center gap-1 cursor-pointer" title="Reset all case identification fields">
+                    <svg class="w-3.5 h-3.5 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                    <span>Clear Case Fields</span>
+                  </button>
                 </div>
-                <h2 class="text-base font-bold text-white mt-1">
-                  CCTV Clock-Drift Demonstration Scenarios
-                </h2>
-                <p class="text-xs text-slate-400 mt-0.5">
-                  Select a pre-configured CCTV DVR benchmark case to test the calibration algorithm, or clear all fields to perform fresh casework.
+                <p class="text-xs text-slate-400 mt-2">
+                  Enter official law enforcement incident details and DVR hardware specifications to establish an unbroken chain of custody for court testimony.
                 </p>
               </div>
 
-              <div class="flex items-center gap-2">
-                <button id="btn-master-clear-fields" class="px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-rose-950/60 border border-slate-700 hover:border-rose-700/60 text-xs font-mono font-semibold text-rose-300 transition flex items-center gap-1.5 shadow-sm cursor-pointer" title="Wipe all demonstration data for fresh casework">
-                  <svg class="w-4 h-4 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                  </svg>
-                  <span>Clear All Example Fields</span>
-                </button>
+              <!-- Case Metadata Input Fields with Helper Text -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono">
+                <!-- Case Number -->
+                <div class="flex flex-col gap-1">
+                  <label for="meta-case-num" class="text-[11px] font-semibold text-slate-300">Case Number:</label>
+                  <input type="text" id="meta-case-num" value="${this.state.caseMetadata.caseNumber}" placeholder="e.g. 2026-CR-0891" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 text-xs focus:outline-none focus:border-teal-400" />
+                  <span class="text-[9px] text-slate-500">Official police department or laboratory case identifier</span>
+                </div>
+
+                <!-- Evidence Item ID -->
+                <div class="flex flex-col gap-1">
+                  <label for="meta-item-id" class="text-[11px] font-semibold text-slate-300">Evidence Item ID:</label>
+                  <input type="text" id="meta-item-id" value="${this.state.caseMetadata.evidenceId}" placeholder="e.g. ITEM-01 / DVR-A" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 text-xs focus:outline-none focus:border-teal-400" />
+                  <span class="text-[9px] text-slate-500">Physical evidence barcode or item tag number</span>
+                </div>
+
+                <!-- Agency / Lab -->
+                <div class="sm:col-span-2 flex flex-col gap-1">
+                  <label for="meta-agency" class="text-[11px] font-semibold text-slate-300">Investigating Agency / Lab:</label>
+                  <input type="text" id="meta-agency" value="${this.state.caseMetadata.agency}" placeholder="e.g. Forensic Video Analysis Unit, Metro Police" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 text-xs focus:outline-none focus:border-teal-400" />
+                  <span class="text-[9px] text-slate-500">Law enforcement department, crime laboratory, or forensic division</span>
+                </div>
+
+                <!-- Examiner -->
+                <div class="flex flex-col gap-1">
+                  <label for="meta-examiner" class="text-[11px] font-semibold text-slate-300">Forensic Examiner:</label>
+                  <input type="text" id="meta-examiner" value="${this.state.caseMetadata.examiner}" placeholder="e.g. R. Hanks, LEVA Tech" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 text-xs focus:outline-none focus:border-teal-400" />
+                  <span class="text-[9px] text-slate-500">Name and credential of analyst performing calibration</span>
+                </div>
+
+                <!-- Exam Date -->
+                <div class="flex flex-col gap-1">
+                  <label for="meta-date" class="text-[11px] font-semibold text-slate-300">Examination Date:</label>
+                  <input type="date" id="meta-date" value="${this.state.caseMetadata.examinationDate}" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 text-xs focus:outline-none focus:border-teal-400" />
+                  <span class="text-[9px] text-slate-500">Official date on which timeline audit was conducted</span>
+                </div>
+
+                <!-- DVR Hardware Model -->
+                <div class="sm:col-span-2 flex flex-col gap-1">
+                  <label for="meta-dvr-model" class="text-[11px] font-semibold text-slate-300">DVR Hardware Make &amp; Model:</label>
+                  <input type="text" id="meta-dvr-model" value="${this.state.caseMetadata.dvrMake ? `${this.state.caseMetadata.dvrMake} ${this.state.caseMetadata.dvrModel}`.trim() : ''}" placeholder="e.g. Hikvision DS-7208HUHI-K2 / Dahua NVR5216" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 text-xs focus:outline-none focus:border-teal-400" />
+                  <span class="text-[9px] text-slate-500">Manufacturer model or firmware version of the recovered CCTV recorder</span>
+                </div>
               </div>
             </div>
 
-            <!-- 3 Obvious Example Cards Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <!-- Example 1 Card -->
-              <div id="card-demo-1" class="bg-slate-950/80 border-2 border-teal-500/80 rounded-lg p-3.5 flex flex-col justify-between gap-3 transition hover:border-teal-400 cursor-pointer shadow-sm">
-                <div class="flex items-start justify-between gap-2">
-                  <div>
-                    <span class="text-xs font-bold text-white flex items-center gap-1.5">
-                      <span class="w-2 h-2 rounded-full bg-amber-400"></span>
-                      <span>Example 1: Hikvision DS-7208</span>
-                    </span>
-                    <div class="text-[11px] text-slate-400 mt-0.5">Robbery Case • DEMO-2026-0814</div>
-                  </div>
-                  <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 whitespace-nowrap">
-                    SLOW (-3m 17s)
-                  </span>
-                </div>
-                <div class="text-[11px] font-mono bg-slate-900/90 rounded p-2 border border-slate-800 space-y-1">
-                  <div class="flex justify-between">
-                    <span class="text-slate-400">DVR OSD:</span>
-                    <span class="text-teal-300 font-semibold">19:42:15.000</span>
-                  </div>
-                  <div class="flex justify-between">
-                    <span class="text-slate-400">Reference:</span>
-                    <span class="text-emerald-300 font-semibold">19:45:32.450</span>
-                  </div>
-                </div>
-                <button id="btn-load-demo-1" class="w-full py-1.5 px-3 rounded bg-teal-500/20 hover:bg-teal-500/30 text-teal-300 border border-teal-500/40 text-xs font-mono font-bold transition cursor-pointer">
-                  ✓ Active Example 1 (Slow)
-                </button>
-              </div>
-
-              <!-- Example 2 Card -->
-              <div id="card-demo-2" class="bg-slate-950/80 border border-slate-800 rounded-lg p-3.5 flex flex-col justify-between gap-3 transition hover:border-emerald-500/60 cursor-pointer shadow-sm">
-                <div class="flex items-start justify-between gap-2">
-                  <div>
-                    <span class="text-xs font-bold text-white flex items-center gap-1.5">
-                      <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-                      <span>Example 2: Dahua NVR5216</span>
-                    </span>
-                    <div class="text-[11px] text-slate-400 mt-0.5">Commercial Burglary • DEMO-2026-1102</div>
-                  </div>
-                  <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 whitespace-nowrap">
-                    FAST (+2m 14s)
-                  </span>
-                </div>
-                <div class="text-[11px] font-mono bg-slate-900/90 rounded p-2 border border-slate-800 space-y-1">
-                  <div class="flex justify-between">
-                    <span class="text-slate-400">DVR OSD:</span>
-                    <span class="text-teal-300 font-semibold">02:18:40.000</span>
-                  </div>
-                  <div class="flex justify-between">
-                    <span class="text-slate-400">Reference:</span>
-                    <span class="text-emerald-300 font-semibold">02:16:26.000</span>
-                  </div>
-                </div>
-                <button id="btn-load-demo-2" class="w-full py-1.5 px-3 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-mono font-semibold transition cursor-pointer">
-                  Load Example 2 (Fast)
-                </button>
-              </div>
-
-              <!-- Example 3 Card -->
-              <div id="card-demo-3" class="bg-slate-950/80 border border-slate-800 rounded-lg p-3.5 flex flex-col justify-between gap-3 transition hover:border-cyan-500/60 cursor-pointer shadow-sm">
-                <div class="flex items-start justify-between gap-2">
-                  <div>
-                    <span class="text-xs font-bold text-white flex items-center gap-1.5">
-                      <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
-                      <span>Example 3: Hanwha QRN-810S</span>
-                    </span>
-                    <div class="text-[11px] text-slate-400 mt-0.5">Traffic Hit &amp; Run • DEMO-2026-0419</div>
-                  </div>
-                  <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 whitespace-nowrap">
-                    SUB-SEC (+18.88s)
-                  </span>
-                </div>
-                <div class="text-[11px] font-mono bg-slate-900/90 rounded p-2 border border-slate-800 space-y-1">
-                  <div class="flex justify-between">
-                    <span class="text-slate-400">DVR OSD:</span>
-                    <span class="text-teal-300 font-semibold">14:05:30.000</span>
-                  </div>
-                  <div class="flex justify-between">
-                    <span class="text-slate-400">Reference:</span>
-                    <span class="text-emerald-300 font-semibold">14:05:11.120</span>
-                  </div>
-                </div>
-                <button id="btn-load-demo-3" class="w-full py-1.5 px-3 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-mono font-semibold transition cursor-pointer">
-                  Load Example 3 (Sub-Sec)
-                </button>
-              </div>
-            </div>
-
-            <!-- Active Example Status / Clean Casework Alert Strip -->
-            <div id="demo-status-strip" class="rounded-lg p-3 bg-amber-950/30 border border-amber-500/40 text-xs font-mono flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-              <div class="flex items-center gap-2">
-                <span class="text-amber-400 font-bold flex items-center gap-1.5">
-                  <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                  </svg>
-                  <span id="demo-status-title">EXAMPLE DATA LOADED:</span>
-                </span>
-                <span id="demo-status-desc" class="text-slate-300">
-                  Hikvision Benchmark Scenario. All timestamps, CCTV frame simulation, and case metadata are demonstration values.
-                </span>
-              </div>
-              <div class="flex items-center gap-2">
-                <button id="btn-strip-clear" class="px-2.5 py-1 rounded bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs transition cursor-pointer flex items-center gap-1">
-                  <span>Clear Example Fields</span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Section: Evidence Acquisition & Case Details -->
-          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            
-            <!-- Left: File Upload & Camera Acquisition (7 Cols) -->
-            <div class="lg:col-span-7 bg-slate-900 border border-slate-800 rounded-xl p-5 flex flex-col gap-4">
-              <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <!-- Top-Right: Evidence Image Acquisition (5 Cols) -->
+            <div class="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-xl p-5 flex flex-col justify-between gap-4 shadow-sm">
+              <div class="flex items-center justify-between border-b border-slate-800 pb-3 flex-wrap gap-2">
                 <div class="flex items-center gap-2">
                   <span class="w-2.5 h-2.5 rounded-full bg-teal-400"></span>
                   <h2 class="font-bold text-white text-base">
@@ -242,6 +214,9 @@ export class SyncFlowApp {
                   SWGDE Physical Acquisition
                 </span>
               </div>
+              <p class="text-xs text-slate-400">
+                Acquire the calibration photograph or frame grab showing the DVR monitor clock. All image parsing and EXIF extraction executes 100% offline.
+              </p>
 
               <!-- Drag & Drop Zone -->
               <div id="drop-zone" class="border-2 border-dashed border-slate-700 hover:border-teal-500/60 bg-slate-950/60 rounded-xl p-5 flex flex-col items-center justify-center text-center gap-2 cursor-pointer transition group">
@@ -254,11 +229,11 @@ export class SyncFlowApp {
                 </div>
 
                 <div class="text-xs font-mono">
-                  <span class="text-teal-400 font-semibold">Tap to select photo</span>
-                  <span class="text-slate-400"> or drag &amp; drop DVR frame</span>
+                  <span class="text-teal-400 font-semibold">Drag and drop the exported DVR frame here to begin extraction</span>
+                  <span class="text-slate-400 block mt-0.5">or click to browse local files</span>
                 </div>
-                <p class="text-[11px] text-slate-500 font-mono">
-                  Direct client-side parsing • JPEG, PNG, HEIC, TIFF • Zero cloud uploads
+                <p class="text-[10px] text-slate-500 font-mono">
+                  Direct client-side memory parsing • JPEG, PNG, HEIC, TIFF • Zero cloud uploads
                 </p>
               </div>
 
@@ -266,59 +241,13 @@ export class SyncFlowApp {
               <div class="bg-slate-950 border border-slate-800 rounded-lg p-3 text-xs font-mono flex flex-col gap-1.5">
                 <div class="flex items-center justify-between">
                   <span class="text-slate-400">Current Evidence File:</span>
-                  <span id="label-filename" class="text-white font-semibold truncate max-w-[240px]">${this.state.imageFileName}</span>
+                  <span id="label-filename" class="text-white font-semibold truncate max-w-[200px]">${this.state.imageFileName}</span>
                 </div>
                 <div class="flex items-center justify-between">
-                  <span class="text-slate-400">SHA-256 Checksum:</span>
-                  <span id="label-sha256" class="text-teal-400 font-mono text-[11px] truncate max-w-[280px]" title="${this.state.sha256Hash}">${this.state.sha256Hash}</span>
+                  <span class="text-slate-400">SHA-256 Hash:</span>
+                  <span id="label-sha256" class="text-teal-400 font-mono text-[11px] truncate max-w-[240px]" title="${this.state.sha256Hash}">${this.state.sha256Hash}</span>
                 </div>
-              </div>
-            </div>
-
-            <!-- Right: Case Metadata Panel (5 Cols) -->
-            <div class="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-xl p-5 flex flex-col justify-between gap-3">
-              <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-                <div class="flex items-center gap-2">
-                  <span class="text-xs font-mono font-semibold text-slate-300">
-                    Case &amp; Evidence Identification
-                  </span>
-                  <span id="meta-demo-tag" class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold">
-                    EXAMPLE DATA
-                  </span>
-                </div>
-                <button id="btn-clear-case-meta" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-rose-950/60 border border-slate-700 hover:border-rose-700/50 text-slate-400 hover:text-rose-300 text-[11px] font-mono transition flex items-center gap-1 cursor-pointer" title="Reset case number and examiner fields">
-                  <svg class="w-3 h-3 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                  </svg>
-                  <span>Clear Case Fields</span>
-                </button>
-              </div>
-
-              <div class="grid grid-cols-2 gap-2 text-xs font-mono">
-                <div>
-                  <span class="text-[10px] text-slate-400 block">Case Number:</span>
-                  <input type="text" id="meta-case-num" value="${this.state.caseMetadata.caseNumber}" class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1.5 text-slate-100 text-xs focus:outline-none focus:border-teal-400" />
-                </div>
-                <div>
-                  <span class="text-[10px] text-slate-400 block">Evidence Item ID:</span>
-                  <input type="text" id="meta-item-id" value="${this.state.caseMetadata.evidenceId}" class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1.5 text-slate-100 text-xs focus:outline-none focus:border-teal-400" />
-                </div>
-                <div class="col-span-2">
-                  <span class="text-[10px] text-slate-400 block">Investigating Agency / Lab:</span>
-                  <input type="text" id="meta-agency" value="${this.state.caseMetadata.agency}" class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1.5 text-slate-100 text-xs focus:outline-none focus:border-teal-400" />
-                </div>
-                <div>
-                  <span class="text-[10px] text-slate-400 block">Forensic Examiner:</span>
-                  <input type="text" id="meta-examiner" value="${this.state.caseMetadata.examiner}" class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1.5 text-slate-100 text-xs focus:outline-none focus:border-teal-400" />
-                </div>
-                <div>
-                  <span class="text-[10px] text-slate-400 block">Exam Date:</span>
-                  <input type="date" id="meta-date" value="${this.state.caseMetadata.examinationDate}" class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1.5 text-slate-100 text-xs focus:outline-none focus:border-teal-400" />
-                </div>
-                <div class="col-span-2">
-                  <span class="text-[10px] text-slate-400 block">DVR Hardware Model:</span>
-                  <input type="text" id="meta-dvr-model" value="${this.state.caseMetadata.dvrMake} ${this.state.caseMetadata.dvrModel}" class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1.5 text-slate-100 text-xs focus:outline-none focus:border-teal-400" />
-                </div>
+                <span class="text-[9px] text-slate-500">Hash computed in-memory to preserve mathematical evidence integrity</span>
               </div>
             </div>
           </div>
@@ -389,65 +318,15 @@ export class SyncFlowApp {
     );
 
     this.bindMasterEvents();
-    this.loadInitialDemo();
-  }
-
-  private loadInitialDemo() {
-    this.loadDemoCase(FORENSIC_DEMO_CASES[0], 0);
-  }
-
-  private loadDemoCase(demo: typeof FORENSIC_DEMO_CASES[0], index: number = 0) {
-    this.activeDemoIndex = index;
-    const canvas = demo.renderCanvas();
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
-
-    const img = new Image();
-    img.onload = () => {
-      this.state.imageSrc = dataUrl;
-      this.state.imageFileName = `${demo.dvrModel.replace(/\s+/g, '_')}_Frame.jpg`;
-      this.state.imageFileSize = 1240000;
-      this.state.caseMetadata = { ...demo.caseMetadata };
-      this.state.dvrTime = { ...demo.dvrTime };
-      this.state.referenceTime = { ...demo.referenceTime };
-      this.state.exif = { ...demo.exif };
-
-      // Update UI displays
-      const fnEl = document.getElementById('label-filename');
-      if (fnEl) fnEl.textContent = this.state.imageFileName;
-
-      this.updateMetadataInputs();
-
-      // Compute hash for demo canvas
-      canvas.toBlob(async (b) => {
-        if (b) {
-          const hash = await calculateSha256(b);
-          this.state.sha256Hash = hash;
-          const hashEl = document.getElementById('label-sha256');
-          if (hashEl) hashEl.textContent = hash;
-        }
-      });
-
-      this.cropCanvas.setImage(img, demo.cropDefault);
-      this.ocrPanel.setRecord(this.state.dvrTime);
-      this.refPanel.setRecord(this.state.referenceTime);
-      if (this.state.exif) this.refPanel.updateExif(this.state.exif);
-
-      this.updateDemoUiState();
-      this.recalculateDrift();
-      this.showToast(`Loaded Demonstration Case ${index + 1}: ${demo.dvrModel}`);
-    };
-    img.src = dataUrl;
   }
 
   public clearAllFields() {
-    this.activeDemoIndex = null;
-
     // Reset Case Identification fields
     this.state.caseMetadata = {
       caseNumber: '',
       evidenceId: '',
       agency: '',
-      examiner: '',
+      examiner: 'R. Hanks',
       examinationDate: new Date().toISOString().split('T')[0],
       dvrMake: '',
       dvrModel: '',
@@ -479,17 +358,16 @@ export class SyncFlowApp {
     if (hashEl) hashEl.textContent = 'Awaiting evidence file...';
 
     this.updateMetadataInputs();
-    this.updateDemoUiState();
     this.recalculateDrift();
 
-    this.showToast('✓ All fields and example data cleared. Ready for new casework.');
+    this.showToast('✓ All fields cleared. Ready for fresh forensic casework.');
   }
 
   public clearCaseFields() {
     this.state.caseMetadata.caseNumber = '';
     this.state.caseMetadata.evidenceId = '';
     this.state.caseMetadata.agency = '';
-    this.state.caseMetadata.examiner = '';
+    this.state.caseMetadata.examiner = 'R. Hanks';
     this.state.caseMetadata.dvrMake = '';
     this.state.caseMetadata.dvrModel = '';
     this.state.caseMetadata.notes = '';
@@ -497,62 +375,6 @@ export class SyncFlowApp {
     this.updateMetadataInputs();
     this.recalculateDrift();
     this.showToast('✓ Case identification fields cleared.');
-  }
-
-  private updateDemoUiState() {
-    const isDemo = this.activeDemoIndex !== null;
-    const metaTag = document.getElementById('meta-demo-tag');
-    const statusStrip = document.getElementById('demo-status-strip');
-    const statusTitle = document.getElementById('demo-status-title');
-    const statusDesc = document.getElementById('demo-status-desc');
-
-    // Update metadata tag
-    if (metaTag) {
-      if (isDemo) {
-        metaTag.className = 'px-1.5 py-0.5 rounded text-[10px] font-mono bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold';
-        metaTag.textContent = `EXAMPLE DATA (Demo ${(this.activeDemoIndex ?? 0) + 1})`;
-      } else {
-        metaTag.className = 'px-1.5 py-0.5 rounded text-[10px] font-mono bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold';
-        metaTag.textContent = 'CLEAN CASEWORK';
-      }
-    }
-
-    // Update status banner
-    if (statusStrip && statusTitle && statusDesc) {
-      if (isDemo) {
-        const demo = FORENSIC_DEMO_CASES[this.activeDemoIndex!];
-        statusStrip.className = 'rounded-lg p-3 bg-amber-950/30 border border-amber-500/40 text-xs font-mono flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2';
-        statusTitle.textContent = `EXAMPLE DATA ACTIVE (Demo ${this.activeDemoIndex! + 1}):`;
-        statusTitle.parentElement?.classList.remove('text-emerald-400');
-        statusTitle.parentElement?.classList.add('text-amber-400');
-        statusDesc.textContent = `${demo.dvrModel} Benchmark Scenario. All timestamps and case parameters are mock demonstration values.`;
-      } else {
-        statusStrip.className = 'rounded-lg p-3 bg-emerald-950/30 border border-emerald-500/40 text-xs font-mono flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2';
-        statusTitle.textContent = 'CLEAN CASEWORK MODE:';
-        statusTitle.parentElement?.classList.remove('text-amber-400');
-        statusTitle.parentElement?.classList.add('text-emerald-400');
-        statusDesc.textContent = 'All demonstration data wiped. Ready for your actual evidence images and certified calibration timestamps.';
-      }
-    }
-
-    // Update demo cards highlight
-    [0, 1, 2].forEach((idx) => {
-      const card = document.getElementById(`card-demo-${idx + 1}`);
-      const btn = document.getElementById(`btn-load-demo-${idx + 1}`);
-      if (!card || !btn) return;
-
-      if (this.activeDemoIndex === idx) {
-        card.classList.remove('border-slate-800');
-        card.classList.add('border-teal-400', 'bg-slate-900/90');
-        btn.className = 'w-full py-1.5 px-3 rounded bg-teal-500/30 text-teal-200 border border-teal-500/50 text-xs font-mono font-bold transition cursor-pointer';
-        btn.textContent = `✓ Active Example ${idx + 1}`;
-      } else {
-        card.classList.remove('border-teal-400', 'bg-slate-900/90');
-        card.classList.add('border-slate-800');
-        btn.className = 'w-full py-1.5 px-3 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-mono font-semibold transition cursor-pointer';
-        btn.textContent = `Load Example ${idx + 1}`;
-      }
-    });
   }
 
   public showToast(message: string) {
@@ -604,23 +426,8 @@ export class SyncFlowApp {
   }
 
   private bindMasterEvents() {
-    // Demo loaders
-    [0, 1, 2].forEach((idx) => {
-      const btn = document.getElementById(`btn-load-demo-${idx + 1}`);
-      const card = document.getElementById(`card-demo-${idx + 1}`);
-      btn?.addEventListener('click', (e) => {
-        e.stopPropagation();
-        this.loadDemoCase(FORENSIC_DEMO_CASES[idx], idx);
-      });
-      card?.addEventListener('click', () => {
-        this.loadDemoCase(FORENSIC_DEMO_CASES[idx], idx);
-      });
-    });
-
-    // Clear All Buttons (Header, Demo Section, Status Strip, Evidence Card)
+    // Clear All Buttons (Header, Evidence Card)
     document.getElementById('btn-header-clear-all')?.addEventListener('click', () => this.clearAllFields());
-    document.getElementById('btn-master-clear-fields')?.addEventListener('click', () => this.clearAllFields());
-    document.getElementById('btn-strip-clear')?.addEventListener('click', () => this.clearAllFields());
     document.getElementById('btn-clear-case-meta')?.addEventListener('click', () => this.clearCaseFields());
 
     // Live Camera button
@@ -657,12 +464,14 @@ export class SyncFlowApp {
       const metaAgency = (document.getElementById('meta-agency') as HTMLInputElement)?.value;
       const metaExam = (document.getElementById('meta-examiner') as HTMLInputElement)?.value;
       const metaDate = (document.getElementById('meta-date') as HTMLInputElement)?.value;
+      const metaModel = (document.getElementById('meta-dvr-model') as HTMLInputElement)?.value;
 
-      this.state.caseMetadata.caseNumber = metaCase || 'CASE-2026';
-      this.state.caseMetadata.evidenceId = metaItem || 'EV-01';
-      this.state.caseMetadata.agency = metaAgency || 'Forensic Agency';
+      this.state.caseMetadata.caseNumber = metaCase || '';
+      this.state.caseMetadata.evidenceId = metaItem || '';
+      this.state.caseMetadata.agency = metaAgency || '';
       this.state.caseMetadata.examiner = metaExam || 'R. Hanks';
       this.state.caseMetadata.examinationDate = metaDate || new Date().toISOString().split('T')[0];
+      this.state.caseMetadata.dvrModel = metaModel || '';
 
       this.recalculateDrift();
     };

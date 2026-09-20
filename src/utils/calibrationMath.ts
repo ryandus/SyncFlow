@@ -61,16 +61,20 @@ export function calculateClockDrift(
     direction = 'SLOW';
   }
 
-  // Format Signed Offset: e.g. "+00:03:17.450" or "-00:05:02.120"
+  // Format Delta strictly as Days:Hours:Minutes:Seconds:MS (e.g., 00:00:00:00:000)
+  // Day rollover math: 1 day = 86,400 seconds = 86,400,000 milliseconds
   const sign = deltaMs >= 0 ? '+' : '-';
   const totalSeconds = Math.floor(absDeltaMs / 1000);
   const msPart = absDeltaMs % 1000;
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
+  const days = Math.floor(totalSeconds / 86400);
+  const remainderSecondsAfterDays = totalSeconds % 86400;
+  const hours = Math.floor(remainderSecondsAfterDays / 3600);
+  const minutes = Math.floor((remainderSecondsAfterDays % 3600) / 60);
+  const seconds = remainderSecondsAfterDays % 60;
 
   const pad = (n: number, z = 2) => String(n).padStart(z, '0');
-  const signedOffsetStr = `${sign}${pad(hours)}:${pad(minutes)}:${pad(seconds)}.${pad(msPart, 3)}`;
+  const formattedDelta = `${pad(days)}:${pad(hours)}:${pad(minutes)}:${pad(seconds)}:${pad(msPart, 3)}`;
+  const signedOffsetStr = `${sign}${formattedDelta}`;
 
   // Human readable description
   let humanSummary = '';
@@ -78,8 +82,9 @@ export function calculateClockDrift(
     humanSummary = 'The DVR Real-Time Clock (RTC) is synchronized with the reference time (variance < 20 ms).';
   } else {
     const timePhraseParts = [];
-    if (hours > 0) timePhraseParts.push(`${hours}h`);
-    if (minutes > 0) timePhraseParts.push(`${minutes}m`);
+    if (days > 0) timePhraseParts.push(`${days}d`);
+    if (hours > 0 || days > 0) timePhraseParts.push(`${hours}h`);
+    if (minutes > 0 || hours > 0 || days > 0) timePhraseParts.push(`${minutes}m`);
     timePhraseParts.push(`${seconds}.${pad(msPart, 3)}s`);
     const timePhrase = timePhraseParts.join(' ');
 
@@ -92,8 +97,8 @@ export function calculateClockDrift(
 
   // Mathematical formula string
   const formulaStr = deltaMs >= 0
-    ? `T_Actual = T_DVR - ${pad(hours)}:${pad(minutes)}:${pad(seconds)}.${pad(msPart, 3)}`
-    : `T_Actual = T_DVR + ${pad(hours)}:${pad(minutes)}:${pad(seconds)}.${pad(msPart, 3)}`;
+    ? `T_Actual = T_DVR - ${formattedDelta} (DD:HH:MM:SS:mmm)`
+    : `T_Actual = T_DVR + ${formattedDelta} (DD:HH:MM:SS:mmm)`;
 
   // Court-admissible LEVA & SWGDE Narrative Statement
   const dvrMakeModel = [caseInfo?.dvrMake, caseInfo?.dvrModel].filter(Boolean).join(' ') || 'Digital Video Recorder (DVR/NVR)';
@@ -107,7 +112,7 @@ On calibration date, forensic examiner ${examinerName} performed a time calibrat
 At the exact calibration instant, the DVR On-Screen Display (OSD) clock exhibited ${formatForensicTimestamp(dvrDate)}, while the verified forensic reference time was ${formatForensicTimestamp(refDate)} (Source: ${referenceTime.sourceDetails || referenceTime.source.toUpperCase()}).
 
 CALCULATION SUMMARY:
-• System Real-Time Clock Variance (Δt): ${signedOffsetStr} (${(deltaSeconds >= 0 ? '+' : '') + deltaSeconds.toFixed(3)} seconds)
+• System Real-Time Clock Variance (Δt): ${signedOffsetStr} [Days:Hours:Minutes:Seconds:MS = ${formattedDelta}] (${(deltaSeconds >= 0 ? '+' : '') + deltaSeconds.toFixed(3)} seconds)
 • Clock Status: DVR is running ${direction} relative to true reference time.
 • Mathematical Proof: ${formulaStr}
 • Uncertainty Margin: ± 0.050 seconds (based on shutter subsecond EXIF quantization and visual frame rate).
@@ -119,6 +124,12 @@ To reconstruct the true chronological timeline for all forensic video extracted 
     deltaMs,
     deltaSeconds,
     signedOffsetStr,
+    formattedDelta,
+    days,
+    hours,
+    minutes,
+    seconds,
+    milliseconds: msPart,
     direction,
     humanSummary,
     mathematicalFormula: formulaStr,

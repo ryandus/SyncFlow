@@ -34,7 +34,6 @@ export class EvidenceCardManager {
 
     const dvrTimeStr = `${s.dvrTime.year}-${pad(s.dvrTime.month)}-${pad(s.dvrTime.day)} ${pad(s.dvrTime.hour)}:${pad(s.dvrTime.minute)}:${pad(s.dvrTime.second)}.${pad(s.dvrTime.millisecond, 3)}`;
     const refTimeStr = `${s.referenceTime.year}-${pad(s.referenceTime.month)}-${pad(s.referenceTime.day)} ${pad(s.referenceTime.hour)}:${pad(s.referenceTime.minute)}:${pad(s.referenceTime.second)}.${pad(s.referenceTime.millisecond, 3)}`;
-    const isExample = !s.caseMetadata.caseNumber || s.caseMetadata.caseNumber.startsWith('DEMO') || s.imageFileName.includes('Hikvision_') || s.imageFileName.includes('Dahua_') || s.imageFileName.includes('Hanwha_');
 
     this.container.innerHTML = `
       <div class="flex flex-col gap-5">
@@ -45,36 +44,36 @@ export class EvidenceCardManager {
               <span class="w-2.5 h-2.5 rounded-full bg-teal-400"></span>
               Court-Ready Forensic Evidence Exhibit
             </h3>
-            <p class="text-xs text-slate-400">Render high-resolution PNG for court filing, mobile photo gallery, or chain-of-custody archive</p>
+            <p class="text-xs text-slate-400">Generate, certify, and export an air-gapped forensic report exhibit for courtroom presentation and chain of custody.</p>
           </div>
 
           <div class="flex items-center gap-2 flex-wrap">
-            <button id="btn-card-clear-all" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-rose-950/50 border border-slate-700 hover:border-rose-700/50 text-xs font-mono text-slate-300 hover:text-rose-300 transition flex items-center gap-1.5 cursor-pointer" title="Clear all fields and start fresh case">
+            <button id="btn-card-clear-all" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-rose-950/50 border border-slate-700 hover:border-rose-700/50 text-xs font-mono text-slate-300 hover:text-rose-300 transition flex items-center gap-1.5 cursor-pointer" title="Reset all forensic fields and start fresh case">
               <svg class="w-4 h-4 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
               </svg>
               <span>Clear All Fields</span>
             </button>
 
-            <button id="btn-copy-statement" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-mono text-slate-200 transition flex items-center gap-1.5 cursor-pointer">
+            <button id="btn-copy-statement" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-mono text-slate-200 transition flex items-center gap-1.5 cursor-pointer" title="Copy expert witness LEVA narrative to clipboard">
               <svg class="w-4 h-4 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>
               </svg>
               <span>Copy LEVA Statement</span>
             </button>
 
-            <button id="btn-export-json" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-mono text-slate-200 transition flex items-center gap-1.5 cursor-pointer">
+            <button id="btn-export-json" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-mono text-slate-200 transition flex items-center gap-1.5 cursor-pointer" title="Download machine-readable forensic audit package">
               <svg class="w-4 h-4 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
               </svg>
               <span>JSON Audit</span>
             </button>
 
-            <button id="btn-export-png" class="px-4 py-2 rounded-lg bg-teal-500 hover:bg-teal-400 active:scale-95 text-slate-950 font-bold text-xs font-mono shadow-md shadow-teal-500/20 transition flex items-center gap-1.5 cursor-pointer">
+            <button id="btn-export-png" class="px-4 py-2 rounded-lg bg-teal-500 hover:bg-teal-400 active:scale-95 text-slate-950 font-bold text-xs font-mono shadow-md shadow-teal-500/20 transition flex items-center gap-1.5 cursor-pointer" title="Export high-resolution forensic card via html2canvas">
               <svg class="w-4 h-4 text-slate-950" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
               </svg>
-              <span>EXPORT HIGH-RES PNG (html2canvas)</span>
+              <span>EXPORT HIGH-RES PNG</span>
             </button>
           </div>
         </div>
@@ -105,15 +104,9 @@ export class EvidenceCardManager {
                   <div class="text-[11px] font-mono tracking-widest text-teal-400 font-bold uppercase">
                     Digital Multimedia Forensic Evidence Exhibit
                   </div>
-                  ${isExample ? `
-                    <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px] font-mono font-bold">
-                      EXAMPLE DATA EXHIBIT
-                    </span>
-                  ` : `
-                    <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-mono font-bold">
-                      CASEWORK EXHIBIT
-                    </span>
-                  `}
+                  <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-mono font-bold">
+                    ${s.caseMetadata.caseNumber ? 'CERTIFIED CASEWORK EXHIBIT' : 'OFFICIAL EXHIBIT'}
+                  </span>
                 </div>
                 <h2 class="text-xl sm:text-2xl font-bold tracking-tight text-white mt-0.5">
                   DVR CLOCK-DRIFT &amp; TIMELINE CALIBRATION CERTIFICATE
@@ -241,9 +234,12 @@ export class EvidenceCardManager {
             <div class="flex flex-col gap-1 text-center sm:text-left">
               <span class="text-[10px] text-slate-400 tracking-wider uppercase">CALCULATED CLOCK VARIANCE (Δt):</span>
               <span class="font-digital text-3xl sm:text-4xl font-bold text-teal-300 tracking-wider">
-                ${res?.signedOffsetStr || '+00:00:00.000'}
+                ${res?.signedOffsetStr || '+00:00:00:00:000'}
               </span>
-              <span class="text-slate-300 text-xs">
+              <span class="text-[10px] text-slate-400 font-mono">
+                Days:Hours:Minutes:Seconds:MS (DD:HH:MM:SS:mmm)
+              </span>
+              <span class="text-slate-300 text-xs mt-0.5">
                 ${res?.humanSummary || 'Awaiting calibration calculations...'}
               </span>
             </div>
@@ -253,7 +249,7 @@ export class EvidenceCardManager {
                 CLOCK STATUS: ${res?.direction || 'SYNCHRONIZED'}
               </div>
               <div class="text-[11px] text-slate-400">
-                Formula: <span class="text-white font-bold">${res?.mathematicalFormula || 'T_Actual = T_DVR - Δt'}</span>
+                Formula: <span class="text-white font-bold">${res?.mathematicalFormula || 'T_Actual = T_DVR - 00:00:00:00:000 (DD:HH:MM:SS:mmm)'}</span>
               </div>
               <div class="text-[10px] text-slate-500">
                 Uncertainty Margin: ± 0.050 seconds

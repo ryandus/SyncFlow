@@ -66,25 +66,25 @@ export class InteractiveCropCanvas {
             <div class="flex items-center gap-1.5 text-slate-300">
               <span class="w-2 h-2 rounded-full bg-teal-400"></span>
               <span class="font-semibold text-slate-200">OSD Clock ROI Bounding Box</span>
-              <span class="text-slate-500 hidden sm:inline">• Drag box or corners to frame DVR time</span>
+              <span class="text-slate-400 hidden sm:inline">• Drag box or corner handles to frame the DVR timestamp digits</span>
             </div>
 
             <!-- Mobile Position Presets -->
             <div class="flex items-center gap-1">
-              <span class="text-[10px] text-slate-400 uppercase tracking-wider mr-1 hidden xs:inline">Presets:</span>
-              <button id="btn-preset-tr" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-[11px] transition">
+              <span class="text-[10px] text-slate-400 uppercase tracking-wider mr-1 hidden xs:inline" title="Quickly snap the bounding box to common CCTV clock positions">Presets:</span>
+              <button id="btn-preset-tr" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-[11px] transition cursor-pointer" title="Snap to top-right screen corner">
                 Top-R
               </button>
-              <button id="btn-preset-tl" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-[11px] transition">
+              <button id="btn-preset-tl" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-[11px] transition cursor-pointer" title="Snap to top-left screen corner">
                 Top-L
               </button>
-              <button id="btn-preset-br" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-[11px] transition">
+              <button id="btn-preset-br" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-[11px] transition cursor-pointer" title="Snap to bottom-right screen corner">
                 Btm-R
               </button>
-              <button id="btn-preset-bl" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-[11px] transition">
+              <button id="btn-preset-bl" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-[11px] transition cursor-pointer" title="Snap to bottom-left screen corner">
                 Btm-L
               </button>
-              <button id="btn-reset-zoom" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-teal-400 border border-slate-700 text-[11px] transition ml-1" title="Fit to screen">
+              <button id="btn-reset-zoom" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-teal-400 border border-slate-700 text-[11px] transition ml-1 cursor-pointer" title="Center and fit evidence image to screen">
                 Fit View
               </button>
             </div>
@@ -125,27 +125,30 @@ export class InteractiveCropCanvas {
               <canvas id="roi-preview-canvas" class="max-w-full max-h-[80px] object-contain"></canvas>
             </div>
             <p class="text-[10px] text-slate-400 font-mono">
-              Optimized for 7-segment LED, dot-matrix, and low-contrast DVR on-screen text.
+              Live cropped buffer parsed by Tesseract.js. Adjust preprocessing filters below to optimize 7-segment LED, dot-matrix, or low-contrast numbers.
             </p>
           </div>
 
           <!-- Forensic Enhancement Filters -->
           <div class="md:col-span-7 flex flex-col justify-between gap-3">
             <div class="flex items-center justify-between flex-wrap gap-2">
-              <span class="text-xs font-mono font-semibold text-slate-300">Forensic OCR Preprocessing Filters</span>
-              <button id="btn-reset-filters" class="text-[11px] font-mono text-teal-400 hover:text-teal-300">
+              <div>
+                <span class="text-xs font-mono font-semibold text-slate-300">Forensic OCR Preprocessing Filters</span>
+                <p class="text-[10px] text-slate-400">Apply hardware-level pixel filters to maximize OCR recognition accuracy.</p>
+              </div>
+              <button id="btn-reset-filters" class="text-[11px] font-mono text-teal-400 hover:text-teal-300 cursor-pointer">
                 Reset Filters
               </button>
             </div>
 
             <!-- Toggles: Grayscale & Invert -->
             <div class="grid grid-cols-2 gap-2 text-xs font-mono">
-              <label class="flex items-center gap-2 p-2 rounded bg-slate-800/80 border border-slate-700/60 cursor-pointer hover:bg-slate-800 transition">
+              <label class="flex items-center gap-2 p-2 rounded bg-slate-800/80 border border-slate-700/60 cursor-pointer hover:bg-slate-800 transition" title="Converts color pixels to luminance to eliminate background chromatic noise">
                 <input type="checkbox" id="filter-grayscale" checked class="rounded border-slate-600 text-teal-500 focus:ring-teal-400" />
                 <span class="text-slate-200">Grayscale Boost</span>
               </label>
 
-              <label class="flex items-center gap-2 p-2 rounded bg-slate-800/80 border border-slate-700/60 cursor-pointer hover:bg-slate-800 transition">
+              <label class="flex items-center gap-2 p-2 rounded bg-slate-800/80 border border-slate-700/60 cursor-pointer hover:bg-slate-800 transition" title="Invert dark and light pixels (essential for light text on dark backgrounds)">
                 <input type="checkbox" id="filter-invert" class="rounded border-slate-600 text-teal-500 focus:ring-teal-400" />
                 <span class="text-slate-200">Invert Colors (B/W)</span>
               </label>
@@ -159,6 +162,7 @@ export class InteractiveCropCanvas {
                   <span id="val-contrast">135%</span>
                 </div>
                 <input type="range" id="slider-contrast" min="50" max="250" value="135" class="accent-teal-400 h-1.5 bg-slate-700 rounded-lg cursor-pointer" />
+                <span class="text-[9px] text-slate-500">Sharpens digit edges against video noise</span>
               </div>
 
               <div class="flex flex-col gap-1">
@@ -167,6 +171,7 @@ export class InteractiveCropCanvas {
                   <span id="val-threshold">Auto</span>
                 </div>
                 <input type="range" id="slider-threshold" min="0" max="255" value="0" class="accent-teal-400 h-1.5 bg-slate-700 rounded-lg cursor-pointer" />
+                <span class="text-[9px] text-slate-500">Separates strokes into pure black and white</span>
               </div>
             </div>
           </div>

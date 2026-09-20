@@ -66,7 +66,13 @@ export type ClockDirection = 'FAST' | 'SLOW' | 'SYNCHRONIZED';
 export interface DriftCalculationResult {
   deltaMs: number;
   deltaSeconds: number;
-  signedOffsetStr: string; // e.g. "+00:04:12.450" or "-00:01:05.200"
+  signedOffsetStr: string; // e.g. "+00:00:04:12:450" or "-00:00:01:05:200"
+  formattedDelta: string; // strictly Days:Hours:Minutes:Seconds:MS (e.g., 00:00:00:00:000)
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+  milliseconds: number;
   direction: ClockDirection;
   humanSummary: string;
   mathematicalFormula: string;

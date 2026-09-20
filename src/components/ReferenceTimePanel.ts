@@ -35,11 +35,16 @@ export class ReferenceTimePanel {
       <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 sm:p-5 flex flex-col gap-4 shadow-sm">
         <!-- Header -->
         <div class="flex items-center justify-between flex-wrap gap-2">
-          <div class="flex items-center gap-2">
-            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
-            <h3 class="font-bold text-white text-sm sm:text-base">
-              Step 2: Calibrated Forensic Reference Time (T_Ref)
-            </h3>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+              <h3 class="font-bold text-white text-sm sm:text-base">
+                Step 2: Calibrated Forensic Reference Time (T_Ref)
+              </h3>
+            </div>
+            <p class="text-xs text-slate-400 mt-0.5">
+              Establish the certified ground-truth reference time corresponding to the exact shutter instant the evidence frame was captured.
+            </p>
           </div>
           <div class="flex items-center gap-2">
             <button id="btn-clear-ref-time" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-rose-950/50 border border-slate-700 hover:border-rose-700/50 text-slate-400 hover:text-rose-300 text-xs font-mono transition flex items-center gap-1 cursor-pointer" title="Reset Reference Time fields">
@@ -48,7 +53,7 @@ export class ReferenceTimePanel {
               </svg>
               <span>Clear Reference</span>
             </button>
-            <button id="btn-sync-atomic" class="px-2.5 py-1 rounded bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/30 text-teal-300 text-xs font-mono font-medium transition flex items-center gap-1.5 cursor-pointer">
+            <button id="btn-sync-atomic" class="px-2.5 py-1 rounded bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/30 text-teal-300 text-xs font-mono font-medium transition flex items-center gap-1.5 cursor-pointer" title="Synchronize inputs to current device system clock (NTP)">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
               </svg>
@@ -60,12 +65,17 @@ export class ReferenceTimePanel {
         <!-- EXIF Metadata Card / Hardware Diagnostics -->
         <div class="bg-slate-950 border border-slate-800 rounded-lg p-3 text-xs font-mono flex flex-col gap-2">
           <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
-            <span class="text-slate-400 font-semibold flex items-center gap-1.5">
-              <svg class="w-4 h-4 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-              </svg>
-              ExifReader Hardware &amp; Shutter Metadata
-            </span>
+            <div>
+              <span class="text-slate-300 font-semibold flex items-center gap-1.5">
+                <svg class="w-4 h-4 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                ExifReader Hardware &amp; Shutter Metadata
+              </span>
+              <p class="text-[10px] text-slate-500 mt-0.5">
+                Parsed directly from image header tags; verifies shutter timestamp, millisecond precision, and GPS.
+              </p>
+            </div>
             <span id="ref-source-badge" class="px-2 py-0.5 rounded bg-teal-950/60 border border-teal-800/60 text-teal-300 text-[10px]">
               ${this.currentRecord.sourceDetails || 'EXIF DateTimeOriginal'}
             </span>
@@ -104,36 +114,38 @@ export class ReferenceTimePanel {
           <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
             <!-- Date Input -->
             <div class="sm:col-span-4 flex flex-col gap-1">
-              <span class="text-[11px] text-slate-400">Reference Date (YYYY-MM-DD)</span>
+              <span class="text-[11px] text-slate-400 font-medium">Reference Date (YYYY-MM-DD)</span>
               <input type="date" id="ref-input-date" value="${dateStr}" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:border-teal-400 focus:outline-none" />
+              <span class="text-[9px] text-slate-500">Certified reference date</span>
             </div>
 
             <!-- Time Inputs (H:M:S.ms) -->
             <div class="sm:col-span-8 flex flex-col gap-1">
-              <span class="text-[11px] text-slate-400">Reference Time (HH : MM : SS . mmm)</span>
+              <span class="text-[11px] text-slate-400 font-medium">Reference Time (HH : MM : SS . mmm)</span>
               <div class="grid grid-cols-4 gap-1.5">
-                <input type="number" id="ref-input-hour" min="0" max="23" value="${pad(this.currentRecord.hour)}" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-2 text-sm text-center text-slate-100 focus:border-teal-400 focus:outline-none" placeholder="HH" />
-                <input type="number" id="ref-input-minute" min="0" max="59" value="${pad(this.currentRecord.minute)}" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-2 text-sm text-center text-slate-100 focus:border-teal-400 focus:outline-none" placeholder="MM" />
-                <input type="number" id="ref-input-second" min="0" max="59" value="${pad(this.currentRecord.second)}" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-2 text-sm text-center text-slate-100 focus:border-teal-400 focus:outline-none" placeholder="SS" />
-                <input type="number" id="ref-input-ms" min="0" max="999" value="${pad(this.currentRecord.millisecond, 3)}" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-2 text-sm text-center text-slate-100 focus:border-teal-400 focus:outline-none" placeholder="mmm" />
+                <input type="number" id="ref-input-hour" min="0" max="23" value="${pad(this.currentRecord.hour)}" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-2 text-sm text-center text-slate-100 focus:border-teal-400 focus:outline-none" placeholder="HH" title="Reference Hours (0-23)" />
+                <input type="number" id="ref-input-minute" min="0" max="59" value="${pad(this.currentRecord.minute)}" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-2 text-sm text-center text-slate-100 focus:border-teal-400 focus:outline-none" placeholder="MM" title="Reference Minutes (0-59)" />
+                <input type="number" id="ref-input-second" min="0" max="59" value="${pad(this.currentRecord.second)}" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-2 text-sm text-center text-slate-100 focus:border-teal-400 focus:outline-none" placeholder="SS" title="Reference Seconds (0-59)" />
+                <input type="number" id="ref-input-ms" min="0" max="999" value="${pad(this.currentRecord.millisecond, 3)}" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-2 text-sm text-center text-slate-100 focus:border-teal-400 focus:outline-none" placeholder="mmm" title="Reference Milliseconds (0-999)" />
               </div>
+              <span class="text-[9px] text-slate-500">Atomic/GPS/EXIF reference instant with millisecond precision</span>
             </div>
           </div>
 
           <!-- Micro-adjust row -->
           <div class="flex items-center justify-between flex-wrap gap-2 pt-1 text-xs">
-            <span class="text-[11px] text-slate-400">Reference Fine-Tune:</span>
+            <span class="text-[11px] text-slate-400" title="Adjust reference time if calibrated against external master broadcast clock">Reference Fine-Tune:</span>
             <div class="flex items-center gap-1.5 flex-wrap">
-              <button id="btn-ref-adj-sec-minus" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+              <button id="btn-ref-adj-sec-minus" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition cursor-pointer" title="Subtract 1 Second">
                 -1s
               </button>
-              <button id="btn-ref-adj-sec-plus" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+              <button id="btn-ref-adj-sec-plus" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition cursor-pointer" title="Add 1 Second">
                 +1s
               </button>
-              <button id="btn-ref-adj-min-minus" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+              <button id="btn-ref-adj-min-minus" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition cursor-pointer" title="Subtract 1 Minute">
                 -1m
               </button>
-              <button id="btn-ref-adj-min-plus" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+              <button id="btn-ref-adj-min-plus" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition cursor-pointer" title="Add 1 Minute">
                 +1m
               </button>
             </div>

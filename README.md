@@ -28,10 +28,10 @@ Since SyncFlow is entirely client-side, it can also be run locally without an in
 1. Clone the repository: `git clone https://github.com/ryandus/SyncFlow.git`
 2. Open `index.html` directly in any modern web browser. No local server required for core functionality.
 
-## 🧪 Demonstration & Benchmarking
-SyncFlow ships with built-in authentic test cases (Hikvision, Dahua, and Hanwha Wisenet) to validate the calibration math and OCR engines. 
+## 🧪 Production Casework Readiness
+SyncFlow is built for direct casework intake. Examiners can immediately input case identifiers, import calibration photographs or capture live DVR monitor displays, extract timestamps via local client-side OCR, and produce calibrated courtroom exhibits with cryptographic SHA-256 integrity verification.
 
-*Note: All benchmark demonstration cards are dynamically watermarked to ensure demonstration reports are never confused with live courtroom casework.*
+*Note: All generated exhibits include cryptographic hashes, EXIF hardware metadata, and embedded forensic watermarks for chain of custody verification.*
 
 ## 👨‍💻 About the Developer
 **Engineered by Ryan Hanks**  

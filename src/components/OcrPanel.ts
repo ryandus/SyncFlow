@@ -36,11 +36,16 @@ export class OcrVerificationPanel {
       <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 sm:p-5 flex flex-col gap-4 shadow-sm">
         <!-- Panel Header -->
         <div class="flex items-center justify-between flex-wrap gap-2">
-          <div class="flex items-center gap-2">
-            <span class="w-2.5 h-2.5 rounded-full bg-teal-400"></span>
-            <h3 class="font-bold text-white text-sm sm:text-base">
-              Step 1: Extract &amp; Verify DVR On-Screen Display Time
-            </h3>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-teal-400"></span>
+              <h3 class="font-bold text-white text-sm sm:text-base">
+                Step 1: Extract &amp; Verify DVR On-Screen Display Time
+              </h3>
+            </div>
+            <p class="text-xs text-slate-400 mt-0.5">
+              Extract the on-screen display timestamp from the cropped DVR frame using local OCR, then verify or adjust each field to match the monitor display.
+            </p>
           </div>
           <div class="flex items-center gap-2">
             <button id="btn-clear-dvr-time" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-rose-950/50 border border-slate-700 hover:border-rose-700/50 text-slate-400 hover:text-rose-300 text-xs font-mono transition flex items-center gap-1 cursor-pointer" title="Reset DVR time fields">
@@ -69,6 +74,9 @@ export class OcrVerificationPanel {
               <span id="ocr-btn-text">EXTRACT CLOCK VIA OCR</span>
             </button>
           </div>
+          <span class="text-[10px] text-slate-400 font-mono">
+            Scans the preprocessed ROI buffer in your browser with zero external network transmission.
+          </span>
 
           <!-- Progress Bar (hidden unless active) -->
           <div id="ocr-progress-container" class="hidden flex-col gap-1.5 pt-1">
@@ -105,37 +113,44 @@ export class OcrVerificationPanel {
         <!-- Verified DVR Displayed Time Input Form -->
         <div class="border-t border-slate-800 pt-3 flex flex-col gap-3">
           <div class="flex items-center justify-between">
-            <label class="text-xs font-mono font-semibold text-slate-200 flex items-center gap-1.5">
-              <span>Verified DVR Clock (On-Screen Display Timestamp)</span>
-            </label>
-            <span class="text-[11px] font-mono text-slate-400">LEVA Section 4.2 Standard</span>
+            <div>
+              <label class="text-xs font-mono font-semibold text-slate-200 flex items-center gap-1.5">
+                <span>Verified DVR Clock (On-Screen Display Timestamp)</span>
+              </label>
+              <p class="text-[10px] text-slate-400">
+                Enter the exact timestamp displayed on the DVR monitor when the reference photograph was taken.
+              </p>
+            </div>
+            <span class="text-[11px] font-mono text-slate-400 hidden sm:inline">LEVA Section 4.2 Standard</span>
           </div>
 
           <!-- Date & Time Input Row -->
           <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 font-mono">
             <!-- Date Input -->
             <div class="sm:col-span-4 flex flex-col gap-1">
-              <span class="text-[11px] text-slate-400">Date (YYYY-MM-DD)</span>
+              <span class="text-[11px] text-slate-400 font-medium">Date (YYYY-MM-DD)</span>
               <input type="date" id="dvr-input-date" value="${dateStr}" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:border-teal-400 focus:outline-none" />
+              <span class="text-[9px] text-slate-500">Date displayed on the DVR monitor</span>
             </div>
 
             <!-- Time Inputs (H:M:S.ms) -->
             <div class="sm:col-span-8 flex flex-col gap-1">
-              <span class="text-[11px] text-slate-400">Time (HH : MM : SS . mmm)</span>
+              <span class="text-[11px] text-slate-400 font-medium">Time (HH : MM : SS . mmm)</span>
               <div class="grid grid-cols-4 gap-1.5">
-                <input type="number" id="dvr-input-hour" min="0" max="23" value="${pad(this.currentRecord.hour)}" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-2 text-sm text-center text-slate-100 focus:border-teal-400 focus:outline-none" placeholder="HH" />
-                <input type="number" id="dvr-input-minute" min="0" max="59" value="${pad(this.currentRecord.minute)}" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-2 text-sm text-center text-slate-100 focus:border-teal-400 focus:outline-none" placeholder="MM" />
-                <input type="number" id="dvr-input-second" min="0" max="59" value="${pad(this.currentRecord.second)}" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-2 text-sm text-center text-slate-100 focus:border-teal-400 focus:outline-none" placeholder="SS" />
-                <input type="number" id="dvr-input-ms" min="0" max="999" value="${pad(this.currentRecord.millisecond, 3)}" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-2 text-sm text-center text-slate-100 focus:border-teal-400 focus:outline-none" placeholder="mmm" />
+                <input type="number" id="dvr-input-hour" min="0" max="23" value="${pad(this.currentRecord.hour)}" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-2 text-sm text-center text-slate-100 focus:border-teal-400 focus:outline-none" placeholder="HH" title="DVR Hours (0-23)" />
+                <input type="number" id="dvr-input-minute" min="0" max="59" value="${pad(this.currentRecord.minute)}" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-2 text-sm text-center text-slate-100 focus:border-teal-400 focus:outline-none" placeholder="MM" title="DVR Minutes (0-59)" />
+                <input type="number" id="dvr-input-second" min="0" max="59" value="${pad(this.currentRecord.second)}" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-2 text-sm text-center text-slate-100 focus:border-teal-400 focus:outline-none" placeholder="SS" title="DVR Seconds (0-59)" />
+                <input type="number" id="dvr-input-ms" min="0" max="999" value="${pad(this.currentRecord.millisecond, 3)}" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-2 text-sm text-center text-slate-100 focus:border-teal-400 focus:outline-none" placeholder="mmm" title="DVR Milliseconds (0-999)" />
               </div>
+              <span class="text-[9px] text-slate-500">Hours (00-23), Minutes (00-59), Seconds (00-59), Milliseconds (000-999)</span>
             </div>
           </div>
 
           <!-- Micro-Adjust Buttons for Forensic Fine-Tuning -->
           <div class="flex items-center justify-between flex-wrap gap-2 pt-1 font-mono text-xs">
-            <span class="text-[11px] text-slate-400">Micro-Adjust:</span>
+            <span class="text-[11px] text-slate-400" title="Fine-tune time if OCR misread seconds by ±1">Micro-Adjust DVR Time:</span>
             <div class="flex items-center gap-1.5 flex-wrap">
-              <button id="btn-adj-sec-minus" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition" title="Minus 1 Second">
+              <button id="btn-adj-sec-minus" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition cursor-pointer" title="Subtract 1 Second">
                 -1s
               </button>
               <button id="btn-adj-sec-plus" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition" title="Plus 1 Second">

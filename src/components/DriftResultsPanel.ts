@@ -54,6 +54,9 @@ export class DriftResultsPanel {
             <h2 class="text-lg sm:text-xl font-bold text-white flex items-center gap-2 mt-0.5">
               DVR Clock Variance &amp; Timeline Delta (Δt)
             </h2>
+            <p class="text-xs text-slate-400 mt-0.5">
+              Calculates signed temporal variance between CCTV recorder time and certified ground-truth reference time (Δt = T_DVR - T_Ref).
+            </p>
           </div>
           <div class="px-3 py-1 rounded-full text-xs font-mono font-bold border ${badgeClass}">
             ${badgeText}
@@ -65,23 +68,39 @@ export class DriftResultsPanel {
           <!-- Subtle forensic grid overlay in background -->
           <div class="absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:16px_16px] opacity-30 pointer-events-none"></div>
 
-          <span class="text-xs font-mono text-slate-400 uppercase tracking-widest mb-1 relative z-10">
+          <span class="text-xs font-mono text-slate-400 uppercase tracking-widest mb-0.5 relative z-10">
             Temporal Offset Signed Vector (Δt = T_DVR - T_Ref)
           </span>
+          <p class="text-[11px] text-teal-400/90 font-mono relative z-10 mb-1">
+            Displaying temporal variance strictly in Days:Hours:Minutes:Seconds:MS format
+          </p>
 
-          <div id="drift-digital-offset" class="font-digital text-4xl sm:text-6xl font-bold tracking-wider ${ledColor} digital-led my-2 relative z-10">
-            ${res ? res.signedOffsetStr : '+00:00:00.000'}
+          <div id="drift-digital-offset" class="font-digital text-3xl sm:text-5xl lg:text-6xl font-bold tracking-wider ${ledColor} digital-led my-2 relative z-10 select-all">
+            ${res ? res.signedOffsetStr : '+00:00:00:00:000'}
           </div>
 
-          <div class="text-xs sm:text-sm font-mono text-slate-300 max-w-2xl mt-2 relative z-10 bg-slate-900/80 px-4 py-2 rounded-lg border border-slate-800">
-            ${res ? res.humanSummary : 'Upload or capture a DVR monitor photograph to compute real-time clock variance.'}
+          <!-- Component Legend -->
+          <div class="flex items-center justify-center gap-1.5 sm:gap-3 text-[10px] sm:text-xs font-mono text-slate-400 tracking-wider relative z-10 bg-slate-900/80 px-3 py-1.5 rounded-md border border-slate-800 mt-1">
+            <span class="text-teal-300 font-semibold">DAYS</span> :
+            <span class="text-teal-300 font-semibold">HOURS</span> :
+            <span class="text-teal-300 font-semibold">MINS</span> :
+            <span class="text-teal-300 font-semibold">SECS</span> :
+            <span class="text-teal-300 font-semibold">MS</span>
+            <span class="text-slate-500 hidden sm:inline">(DD:HH:MM:SS:mmm)</span>
+          </div>
+
+          <div class="text-xs sm:text-sm font-mono text-slate-300 max-w-2xl mt-3 relative z-10 bg-slate-900/80 px-4 py-2 rounded-lg border border-slate-800">
+            ${res ? res.humanSummary : 'Upload or capture a DVR monitor photograph to compute real-time clock variance and day rollovers.'}
           </div>
 
           <!-- Mathematical Formula Pill -->
-          <div class="mt-3 inline-flex items-center gap-2 px-3 py-1 rounded bg-slate-900 border border-slate-800 text-xs font-mono text-teal-300 relative z-10">
-            <span class="text-slate-500 font-semibold">LEVA Formula:</span>
-            <span>${res ? res.mathematicalFormula : 'T_Actual = T_DVR - Δt'}</span>
+          <div class="mt-3 inline-flex flex-col sm:flex-row items-center gap-2 px-3 py-1.5 rounded bg-slate-900 border border-slate-800 text-xs font-mono text-teal-300 relative z-10 text-center">
+            <span class="text-slate-400 font-semibold">LEVA Calibration Formula:</span>
+            <span class="text-white font-bold">${res ? res.mathematicalFormula : 'T_Actual = T_DVR - 00:00:00:00:000 (DD:HH:MM:SS:mmm)'}</span>
           </div>
+          <p class="text-[10px] text-slate-500 font-mono mt-1 relative z-10">
+            Apply this signed calibration formula across all recorded footage to align CCTV events with actual real-world time.
+          </p>
         </div>
 
         <!-- Multi-Point Drift Rate Analysis Drawer (Secondary Check) -->
@@ -95,30 +114,35 @@ export class DriftResultsPanel {
                 Compare two calibration checkpoints over elapsed time to determine quartz oscillator drift (sec/day, ppm).
               </p>
             </div>
-            <button id="btn-toggle-multipoint" class="px-3 py-1 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-mono text-teal-300 transition">
+            <button id="btn-toggle-multipoint" class="px-3 py-1 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-mono text-teal-300 transition cursor-pointer">
               ${this.multiPointActive ? 'Close Drift Rate' : 'Calculate Drift Rate (sec/day)'}
             </button>
           </div>
 
           <div id="multipoint-panel" class="${this.multiPointActive ? 'flex' : 'hidden'} flex-col gap-3 border-t border-slate-800 pt-3">
             <p class="text-xs text-slate-400 font-mono">
-              Point 1 is populated from current calibration. Enter second checkpoint (T2) taken at conclusion of scene acquisition:
+              Checkpoint 1 is automatically derived from the primary calibration above. Enter the secondary checkpoint (T2) taken at the conclusion of the scene examination:
             </p>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono">
               <div class="flex flex-col gap-1 bg-slate-950 p-2.5 rounded border border-slate-800">
-                <span class="text-slate-400 font-semibold">T2 DVR Displayed Time:</span>
-                <input type="datetime-local" id="t2-dvr-time" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-slate-100 focus:outline-none focus:border-teal-400" />
+                <span class="text-slate-300 font-semibold">T2 DVR Displayed Time:</span>
+                <span class="text-[10px] text-slate-500">Timestamp displayed on the DVR monitor during second calibration check.</span>
+                <input type="datetime-local" id="t2-dvr-time" class="bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-slate-100 focus:outline-none focus:border-teal-400" />
               </div>
               <div class="flex flex-col gap-1 bg-slate-950 p-2.5 rounded border border-slate-800">
-                <span class="text-slate-400 font-semibold">T2 Reference Time:</span>
-                <input type="datetime-local" id="t2-ref-time" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-slate-100 focus:outline-none focus:border-teal-400" />
+                <span class="text-slate-300 font-semibold">T2 Reference Time:</span>
+                <span class="text-[10px] text-slate-500">True atomic standard or camera EXIF timestamp at the moment of the second check.</span>
+                <input type="datetime-local" id="t2-ref-time" class="bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-slate-100 focus:outline-none focus:border-teal-400" />
               </div>
             </div>
 
-            <button id="btn-calc-drift-rate" class="w-fit px-4 py-2 rounded bg-teal-600 hover:bg-teal-500 text-slate-950 font-bold text-xs font-mono transition">
-              Compute Oscillator Drift Rate
-            </button>
+            <div class="flex items-center justify-between flex-wrap gap-2 pt-1">
+              <button id="btn-calc-drift-rate" class="w-fit px-4 py-2 rounded bg-teal-600 hover:bg-teal-500 text-slate-950 font-bold text-xs font-mono transition cursor-pointer">
+                Compute Oscillator Drift Rate
+              </button>
+              <span class="text-[10px] font-mono text-slate-500">Computes linear crystal drift rate to project past and future video timestamps.</span>
+            </div>
 
             <div id="drift-rate-result" class="hidden p-3 rounded bg-slate-950 border border-slate-800 text-xs font-mono flex items-center justify-between">
               <div>
