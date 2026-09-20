@@ -350,7 +350,7 @@ export class OcrVerificationPanel {
     this.syncInputs();
 
     const rawTextEl = this.container.querySelector('#ocr-raw-text');
-    if (rawTextEl) rawTextEl.textContent = rec.rawOcrText || '(Demo Pre-loaded)';
+    if (rawTextEl) rawTextEl.textContent = rec.rawOcrText || '(Direct Casework Input)';
 
     const badge = this.container.querySelector('#ocr-confidence-badge');
     if (badge) badge.textContent = `${rec.ocrConfidence}%`;

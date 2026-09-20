@@ -97,10 +97,24 @@ export class SyncFlowApp {
       milestones: [
         {
           id: 'm-1',
-          label: 'Suspect Enters Scene',
-          dvrTimestamp: `${todayStr} 12:00:00`,
+          label: '',
+          dvrTimestamp: '',
           calibratedTimestamp: '',
-          notes: 'Subject observed entering perimeter on primary camera',
+          notes: '',
+        },
+        {
+          id: 'm-2',
+          label: '',
+          dvrTimestamp: '',
+          calibratedTimestamp: '',
+          notes: '',
+        },
+        {
+          id: 'm-3',
+          label: '',
+          dvrTimestamp: '',
+          calibratedTimestamp: '',
+          notes: '',
         },
       ],
       multiPoint: { enabled: false },
@@ -310,7 +324,13 @@ export class SyncFlowApp {
     );
 
     this.driftPanel = new DriftResultsPanel('drift-results-container', this.state.driftResult);
-    this.timelineConverter = new TimelineConverter('timeline-converter-container', this.state.driftResult);
+    this.timelineConverter = new TimelineConverter(
+      'timeline-converter-container',
+      this.state.driftResult,
+      (updatedMilestones) => {
+        this.state.milestones = updatedMilestones;
+      }
+    );
     this.cardManager = new EvidenceCardManager(
       'evidence-card-container',
       () => this.state,

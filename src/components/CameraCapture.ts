@@ -130,7 +130,7 @@ export class CameraCaptureModal {
       }
     } catch (err) {
       console.warn('SyncFlow: Camera access failed or denied:', err);
-      alert('Camera access could not be initialized. You may also upload any photo file directly or select a forensic demo case.');
+      alert('Camera access could not be initialized. Please check device permissions or drag and drop an evidence image file directly.');
       this.close();
     }
   }
