@@ -11,6 +11,7 @@ SyncFlow is built to operate in strict, isolated environments. The application e
 
 ### Key Features
 *   **Air-Gapped Processing:** Zero-server architecture. All image processing, OCR, and cryptographic hashing (SHA-256) are performed entirely client-side using the Web Crypto API.
+*   **Air-Gapped Reference-Time Calibration:** Establishes true real-world reference time without external network connections by extracting trusted `DateTimeOriginal` EXIF metadata from calibration photos taken with synced field devices, calculating temporal drift ($\Delta t$) entirely against client-side OCR DVR timestamps.
 *   **Touch-Optimized ROI Cropping:** Precision crop tools with real-time contrast, grayscale, inversion, and binarization filters for clarifying degraded CCTV timestamps.
 *   **Client-Side OCR (Tesseract.js):** Real-time optical character recognition optimized for dot-matrix and 7-segment CCTV fonts with regex normalization.
 *   **Clock-Drift Analysis:** Calculates signed clock vectors (Δt), categorizing drift status (Fast/Slow/Synchronized), and computes quartz oscillator linear drift rates (seconds/day and PPM).
