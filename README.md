@@ -38,7 +38,7 @@ SyncFlow is built for direct casework intake. Examiners can immediately input ca
 
 ## 👨‍💻 About the Developer
 **Engineered by Ryan Hanks**  
-SyncFlow is part of the **CustodyFlow** suite of open-source diagnostic and investigative web applications, alongside **TriageFlow**, **TraceFlow**, and **ProdFlow**, built to streamline technical workflows and maintain rigorous analytical standards.
+SyncFlow is part of the **CustodyFlow** suite of open-source diagnostic and investigative web applications, alongside **TraceFlow** and **ProdFlow**, built to streamline technical workflows and maintain rigorous analytical standards.
 
 ## 📄 License
 This project is open-source and licensed under the MIT License.
