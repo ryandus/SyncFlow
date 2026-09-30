@@ -1,5 +1,7 @@
 # SyncFlow: Forensic DVR Clock-Drift & Timeline Calibrator
 
+> Part of the **[CustodyFlow](https://github.com/ryandus/custodyflow)** suite: defensible DFIR and eDiscovery workflow tools.
+
 A client-side, air-gapped web application designed for digital forensic examiners to calculate CCTV temporal variance and synchronize video timelines. Engineered in compliance with LEVA video analysis protocols and SWGDE evidence recovery standards.
 
 ## 🚀 Live Deployment
@@ -36,7 +38,7 @@ SyncFlow is built for direct casework intake. Examiners can immediately input ca
 
 ## 👨‍💻 About the Developer
 **Engineered by Ryan Hanks**  
-SyncFlow joins a suite of open-source diagnostic and investigative web applications—including **TriageFlow**, **TraceFlow**, and the **Police Report Generator**—built to streamline technical workflows and maintain rigorous analytical standards.
+SyncFlow is part of the **CustodyFlow** suite of open-source diagnostic and investigative web applications, alongside **TriageFlow**, **TraceFlow**, and **ProdFlow**, built to streamline technical workflows and maintain rigorous analytical standards.
 
 ## 📄 License
 This project is open-source and licensed under the MIT License.
