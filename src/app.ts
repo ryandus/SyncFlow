@@ -581,8 +581,8 @@ export class SyncFlowApp {
       minute: captureTime.getMinutes(),
       second: captureTime.getSeconds(),
       millisecond: captureTime.getMilliseconds(),
-      source: 'nist',
-      sourceDetails: `Live Forensic Camera Shutter (${fakeFile.name})`,
+      source: 'manual',
+      sourceDetails: `Device clock at camera capture (${fakeFile.name}); not independently verified`,
     };
     this.refPanel.setRecord(this.state.referenceTime);
 
