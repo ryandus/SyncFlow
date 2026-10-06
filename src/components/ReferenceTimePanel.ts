@@ -53,11 +53,11 @@ export class ReferenceTimePanel {
               </svg>
               <span>Clear Reference</span>
             </button>
-            <button id="btn-sync-atomic" class="px-2.5 py-1 rounded bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/30 text-teal-300 text-xs font-mono font-medium transition flex items-center gap-1.5 cursor-pointer" title="Synchronize inputs to current device system clock (NTP)">
+            <button id="btn-sync-atomic" class="px-2.5 py-1 rounded bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/30 text-teal-300 text-xs font-mono font-medium transition flex items-center gap-1.5 cursor-pointer" title="Set the reference time to this device's system clock (not independently verified)">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
               </svg>
-              <span>Sync Now (Atomic/NTP)</span>
+              <span>Use Device Clock</span>
             </button>
           </div>
         </div>
@@ -229,8 +229,8 @@ export class ReferenceTimePanel {
     this.currentRecord.minute = now.getMinutes();
     this.currentRecord.second = now.getSeconds();
     this.currentRecord.millisecond = now.getMilliseconds();
-    this.currentRecord.source = 'nist';
-    this.currentRecord.sourceDetails = 'NTP / Atomic Reference Clock (Local Device Synchronized)';
+    this.currentRecord.source = 'manual';
+    this.currentRecord.sourceDetails = 'Local device system clock (not independently verified)';
 
     this.syncInputs();
     const sourceBadge = this.container.querySelector('#ref-source-badge');
