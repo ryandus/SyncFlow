@@ -44,7 +44,7 @@ export class EvidenceCardManager {
               <span class="w-2.5 h-2.5 rounded-full bg-teal-400"></span>
               Court-Ready Forensic Evidence Exhibit
             </h3>
-            <p class="text-xs text-slate-400">Generate, certify, and export an air-gapped forensic report exhibit for courtroom presentation and chain of custody.</p>
+            <p class="text-xs text-slate-400">Generate and export a forensic report exhibit for courtroom presentation and chain of custody.</p>
           </div>
 
           <div class="flex items-center gap-2 flex-wrap">
